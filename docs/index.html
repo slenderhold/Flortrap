@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Flortrap: лаунчер для Roblox с гибкой настройкой, оптимизацией и модами.">
+<meta property="og:title" content="Flortrap">
+<meta property="og:description" content="Roblox, как вам удобно. Гибкая настройка, оптимизация, моды.">
+<meta property="og:image" content="https://slenderhold.github.io/Flortrap/banner.png">
+<title>Flortrap</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: black page over a cursor-reactive dot field. Sticky glass nav, hero with tilting screenshot, marquee, bento features, a clickable launcher demo, install steps, mod code, FAQ, final CTA. */
+:root {
+  --bg: #000000; --surface: #0a0a0a; --surface-2: #141414; --line: #1e1e1e; --line-2: #2a2a2a;
+  --fg: #ffffff; --dim: #8c8c8c; --soft: #d0d0d0;
+  --accent: #ffffff; --accent-rgb: 255,255,255; --good: #4ade80; --warn: #fbbf24;
+  --font: "Geist", "Segoe UI", system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 56px; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 10px; }
+.wrap { max-width: 1120px; margin: 0 auto; position: relative; z-index: 1; }
+#field { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.glow { position: absolute; left: 0; right: 0; top: 0; height: 900px; pointer-events: none; z-index: 0;
+  background: radial-gradient(55% 50% at 50% 36%, rgba(var(--accent-rgb),.13), rgba(var(--accent-rgb),0) 70%); transition: background .4s; }
+
+/* nav */
+.navbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; margin: 0 -16px; padding: 0 16px; }
+.navbar::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: rgba(0,0,0,.7); }
+nav { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 17px; letter-spacing: -.01em; }
+.logo { width: 34px; height: 34px; border-radius: 10px; background: #050505; border: 1px solid var(--line-2); display: grid; place-items: center; }
+.logo svg { width: 20px; height: 20px; fill: #fff; }
+.navlinks { display: flex; gap: 4px; align-items: center; padding: 5px; border: 1px solid var(--line); border-radius: 999px; background: rgba(10,10,10,.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.navlinks a { padding: 7px 14px; border-radius: 999px; color: var(--dim); font-size: 14px; transition: color .2s, background .2s; }
+.navlinks a:hover { color: #fff; background: var(--surface-2); }
+.navlinks a.dl { background: var(--accent); color: #000; font-weight: 600; }
+.navlinks a.dl:hover { filter: brightness(.9); }
+
+/* hero */
+.hero { text-align: center; padding: 64px 0 0; }
+h1 { font-size: clamp(54px, 11vw, 132px); line-height: .95; letter-spacing: -.055em; font-weight: 800; margin: 0 0 22px; }
+h1 .w { display: inline-block; animation: rise .9s cubic-bezier(.2,.8,.2,1) both; }
+h1 .grad { background: linear-gradient(100deg, #fff 0%, #777 40%, #fff 60%, #777 100%); background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; animation: rise .9s .12s cubic-bezier(.2,.8,.2,1) both, shimmer 7s linear infinite; }
+@keyframes rise { from { transform: translateY(26px); filter: blur(6px); } to { transform: none; filter: none; } }
+@keyframes shimmer { to { background-position: -220% 0; } }
+.tag { font-size: clamp(20px, 3vw, 30px); letter-spacing: -.025em; font-weight: 600; color: var(--soft); margin: 0 0 14px; text-wrap: balance; }
+.lead { max-width: 540px; margin: 0 auto; color: var(--dim); font-size: clamp(16px, 2vw, 18px); text-wrap: balance; }
+.cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 34px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 56px; padding: 0 28px; border-radius: 17px; font-weight: 600; font-size: 16px;
+  transition: transform .2s, box-shadow .25s, background .2s; position: relative; }
+.btn svg { width: 20px; height: 20px; fill: currentColor; }
+.btn.primary { background: var(--accent); color: #000; }
+.btn.primary:hover { transform: scale(1.04); box-shadow: 0 0 44px rgba(var(--accent-rgb),.45); }
+.btn.primary:active { transform: scale(.98); }
+.btn.ghost { background: var(--surface-2); color: #fff; border: 1px solid var(--line-2); }
+.btn.ghost:hover { background: #1c1c1c; transform: scale(1.04); }
+
+/* screenshot */
+.stage { perspective: 1500px; margin: 72px auto 0; max-width: 960px; position: relative; }
+.shot { position: relative; border-radius: 20px; transform-style: preserve-3d; will-change: transform; transform: rotateX(16deg) scale(.92); transition: box-shadow .5s;
+  box-shadow: 0 40px 120px rgba(255,255,255,.07), 0 0 0 1px #2a2a2a; }
+.shot.live { box-shadow: 0 60px 160px rgba(255,255,255,.13), 0 0 0 1px #4a4a4a; }
+.shot img { display: block; width: 100%; height: auto; border-radius: 20px; }
+.shot::after { content: ""; position: absolute; inset: 0; border-radius: 20px; pointer-events: none; opacity: 0; transition: opacity .3s;
+  background: radial-gradient(460px circle at var(--gx, 50%) var(--gy, 0%), rgba(255,255,255,.12), transparent 60%); }
+.shot.live::after { opacity: 1; }
+.chip { position: absolute; display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; font-size: 13px; font-weight: 500;
+  background: rgba(14,14,14,.82); border: 1px solid var(--line-2); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 10px 40px rgba(0,0,0,.6); transform: translateZ(60px); animation: bob 6s ease-in-out infinite; white-space: nowrap; }
+.chip i { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 10px var(--good); }
+.chip.c1 { left: -26px; top: 18%; } .chip.c2 { right: -22px; top: 40%; animation-delay: -2s; } .chip.c3 { left: 6%; bottom: -18px; animation-delay: -4s; }
+@keyframes bob { 50% { margin-top: -10px; } }
+@media (max-width: 1060px) { .chip.c1 { left: 8px; } .chip.c2 { right: 8px; } }
+
+/* marquee */
+.marquee { margin-top: 110px; overflow: hidden; border-block: 1px solid var(--line); padding: 16px 0; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.track { display: flex; gap: 44px; width: max-content; animation: slide 38s linear infinite; font-family: var(--mono); font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: .1em; }
+.track span { display: inline-flex; align-items: center; gap: 44px; }
+.track span::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #444; }
+@keyframes slide { to { transform: translateX(-50%); } }
+
+section { padding-top: 130px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+h2 { font-size: clamp(32px, 5.2vw, 56px); letter-spacing: -.045em; line-height: 1.04; margin: 12px 0 14px; font-weight: 800; text-wrap: balance; }
+.sub { color: var(--dim); max-width: 580px; margin: 0; font-size: 17px; }
+.head { margin-bottom: 44px; }
+.head.center { text-align: center; } .head.center .sub { margin: 0 auto; }
+
+/* reveal: transform only, so content is always visible */
+.rv { transform: translateY(28px); transition: transform .8s cubic-bezier(.2,.8,.2,1); }
+.rv.in { transform: none; }
+
+/* bento */
+.bento { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.card { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 26px; overflow: hidden; min-width: 0;
+  transition: border-color .25s, transform .3s; }
+.card::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s;
+  background: radial-gradient(300px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,.08), transparent 70%); }
+.card:hover { border-color: #3a3a3a; }
+.card:hover::before { opacity: 1; }
+.card h3 { margin: 0 0 6px; font-size: 20px; letter-spacing: -.02em; font-weight: 700; }
+.card p { margin: 0; color: var(--dim); font-size: 15px; max-width: 46ch; }
+.s2 { grid-column: span 2; } .s3 { grid-column: span 3; } .s4 { grid-column: span 4; }
+.viz { margin-top: 22px; }
+.ico { width: 44px; height: 44px; border-radius: 13px; background: var(--surface-2); border: 1px solid var(--line-2); display: grid; place-items: center; margin-bottom: 18px; }
+.ico svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.bars { display: grid; gap: 12px; }
+.bar { display: grid; grid-template-columns: 110px 1fr 54px; align-items: center; gap: 12px; font-size: 13px; color: var(--soft); }
+.bar .t { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.bar .t b { display: block; height: 100%; width: 0; border-radius: 99px; background: var(--accent); transition: width 1.4s cubic-bezier(.2,.8,.2,1); }
+.bar em { font-style: normal; font-family: var(--mono); font-size: 12px; text-align: right; color: var(--dim); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pick { border: 1px solid var(--line-2); background: var(--surface-2); border-radius: 999px; padding: 8px 14px; font-size: 13px; cursor: pointer; transition: all .2s; }
+.pick:hover { border-color: #555; }
+.pick.on { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+.bg-demo { height: 120px; border-radius: 14px; border: 1px solid var(--line-2); position: relative; overflow: hidden;
+  background: linear-gradient(120deg, #1a1a1a, #3a3a3a, #101010, #2a2a2a); background-size: 300% 300%; animation: pan 8s ease-in-out infinite; }
+.bg-demo span { position: absolute; left: 12px; bottom: 10px; font-family: var(--mono); font-size: 11px; background: rgba(0,0,0,.6); padding: 4px 9px; border-radius: 99px; }
+@keyframes pan { 50% { background-position: 100% 100%; } }
+.disc { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line-2); }
+.disc .av { width: 48px; height: 48px; border-radius: 12px; background: #050505; border: 1px solid var(--line-2); display: grid; place-items: center; flex: none; }
+.disc .av svg { width: 26px; fill: #fff; }
+.disc b { display: block; font-size: 14px; } .disc small { color: var(--dim); font-size: 12px; }
+.upd { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin-top: 4px; }
+.upd b { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; animation: fill 4s ease-in-out infinite; }
+@keyframes fill { 0% { width: 0; } 70%, 100% { width: 100%; } }
+.week { display: flex; align-items: flex-end; gap: 8px; height: 96px; }
+.week i { flex: 1; border-radius: 7px; background: #2a2a2a; height: 4px; transition: height 1.2s cubic-bezier(.2,.8,.2,1); }
+.week i.hi { background: var(--accent); }
+.note { font-family: var(--mono); font-size: 11px; color: #5c5c5c; margin-top: 8px; }
+
+/* demo window */
+.demo { max-width: 940px; margin: 0 auto; border-radius: 22px; border: 1px solid var(--line-2); background: #050505; overflow: hidden;
+  box-shadow: 0 50px 140px rgba(255,255,255,.06); display: grid; grid-template-columns: 190px 1fr; min-height: 470px; }
+.side { border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 4px; background: #030303; }
+.side .brand { padding: 4px 8px 16px; font-size: 15px; }
+.nv { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 11px; color: var(--dim); font-size: 14px; font-weight: 600; cursor: pointer; background: none; border: 0; text-align: left; transition: background .2s, color .2s; }
+.nv svg { width: 18px; height: 18px; fill: currentColor; flex: none; }
+.nv:hover { background: var(--surface-2); color: #fff; }
+.nv.on { background: var(--surface-2); color: #fff; }
+.pane { padding: 22px; min-width: 0; }
+.pane[hidden] { display: none; }
+.pane h4 { margin: 0 0 4px; font-size: 20px; letter-spacing: -.02em; }
+.pane .hint { color: var(--dim); font-size: 13px; margin: 0 0 16px; }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.tile { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 12px 14px; }
+.tile small { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase; }
+.tile b { font-size: 22px; letter-spacing: -.02em; }
+.launch { border: 1px solid var(--line); background: var(--surface); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 6px; }
+.launch .go { margin-top: 10px; height: 46px; border-radius: 14px; background: var(--accent); color: #000; font-weight: 700; border: 0; cursor: pointer; transition: transform .2s, box-shadow .2s; }
+.launch .go:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(255,255,255,.3); }
+.launch .go.busy { background: #1c1c1c; color: #fff; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px; border: 1px solid var(--line); background: var(--surface); border-radius: 13px; margin-bottom: 8px; font-size: 14px; }
+.row small { display: block; color: var(--dim); font-size: 12px; }
+.sw { width: 44px; height: 24px; border-radius: 99px; border: 1px solid var(--line-2); background: var(--surface-2); position: relative; cursor: pointer; flex: none; transition: background .2s; padding: 0; }
+.sw::after { content: ""; position: absolute; left: 4px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #b5b5b5; transition: transform .2s, background .2s; }
+.sw[aria-checked="true"] { background: var(--accent); } .sw[aria-checked="true"]::after { transform: translateX(20px); background: #000; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 99px; background: var(--surface-2); outline-offset: 6px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 0; cursor: grab; box-shadow: 0 0 14px rgba(255,255,255,.5); }
+input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 0; cursor: grab; }
+.val { font-family: var(--mono); font-size: 13px; min-width: 64px; text-align: right; }
+.mod { display: grid; grid-template-columns: 120px 1fr auto; gap: 14px; align-items: center; border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 10px; margin-bottom: 8px; }
+.mod .bn { height: 64px; border-radius: 10px; border: 1px solid var(--line-2); }
+.mod b { display: block; } .mod small { color: var(--dim); font-size: 12px; }
+.mod .st { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-top: 3px; }
+
+/* steps */
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 28px; position: relative; overflow: hidden; }
+.step .n { font-family: var(--mono); font-size: 12px; color: var(--dim); border: 1px solid var(--line-2); border-radius: 99px; padding: 4px 11px; display: inline-block; margin-bottom: 18px; }
+.step h3 { margin: 0 0 6px; font-size: 22px; letter-spacing: -.025em; } .step p { margin: 0; color: var(--dim); font-size: 15px; }
+
+/* code */
+.codewrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 28px; align-items: center; }
+.code { border: 1px solid var(--line-2); border-radius: 18px; background: #050505; overflow: hidden; min-width: 0; }
+.code .top { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--dim); }
+.copy { border: 1px solid var(--line-2); background: var(--surface-2); border-radius: 99px; padding: 5px 12px; font-size: 12px; cursor: pointer; transition: background .2s; }
+.copy:hover { background: #222; }
+pre { margin: 0; padding: 18px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.7; color: var(--soft); }
+.k { color: #fff; } .s { color: #9a9a9a; } .b { color: var(--good); }
+.list { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 10px; }
+.list li { display: flex; gap: 12px; color: var(--soft); font-size: 15px; }
+.list li::before { content: ""; width: 20px; height: 20px; flex: none; margin-top: 2px; border-radius: 50%; background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m5.5 10.5 3 3 6-7' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/20px no-repeat; }
+
+.teaser { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 36px; align-items: center; border: 1px solid var(--line-2); border-radius: 28px; padding: clamp(26px, 5vw, 56px); background: radial-gradient(70% 120% at 0% 0%, rgba(var(--accent-rgb), .08), transparent 70%), var(--surface); }
+@media (max-width: 760px) { .teaser { grid-template-columns: minmax(0, 1fr); } .teaser .btn { width: 100%; } }
+.diffs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 100px; }
+.dcard { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 24px; transition: border-color .25s; }
+.dcard:hover { border-color: #3a3a3a; } .dcard h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -.02em; } .dcard p { margin: 0; color: var(--dim); font-size: 14.5px; }
+.q a, .doc a.dl2 { color: #fff; border-bottom: 1px solid var(--accent); } .q a:hover { background: rgba(var(--accent-rgb), .15); }
+@media (max-width: 900px) { .diffs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .diffs { grid-template-columns: minmax(0, 1fr); margin-top: 70px; } }
+/* faq */
+.faq { max-width: 780px; margin: 0 auto; display: grid; gap: 8px; }
+.q { border: 1px solid var(--line); background: var(--surface); border-radius: 16px; overflow: hidden; transition: border-color .2s; }
+.q:hover, .q[open] { border-color: #3a3a3a; }
+.q summary { list-style: none; cursor: pointer; padding: 18px 22px; font-weight: 600; display: flex; justify-content: space-between; gap: 16px; align-items: center; }
+.q summary::-webkit-details-marker { display: none; }
+.q summary::after { content: "+"; font-size: 22px; font-weight: 400; color: var(--dim); transition: transform .25s; flex: none; }
+.q[open] summary::after { transform: rotate(45deg); }
+.q p { margin: 0; padding: 0 22px 20px; color: var(--dim); font-size: 15px; }
+
+.final { text-align: center; margin-top: 130px; padding: 80px 20px; border: 1px solid var(--line-2); border-radius: 32px; position: relative; overflow: hidden;
+  background: radial-gradient(60% 90% at 50% 0%, rgba(var(--accent-rgb),.14), transparent 70%), var(--surface); }
+.final h2 { margin-top: 0; font-size: clamp(34px, 6vw, 68px); }
+.final .logo { width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 26px; box-shadow: 0 0 60px rgba(var(--accent-rgb),.25); }
+.final .logo svg { width: 36px; height: 36px; }
+
+
+/* v2 additions */
+#prog { position: fixed; top: 0; left: 0; height: 2px; width: 100%; z-index: 60; background: var(--accent); transform-origin: 0 50%; transform: scaleX(0); }
+.cur { position: fixed; left: 0; top: 0; width: 30px; height: 30px; margin: -15px 0 0 -15px; pointer-events: none; z-index: 70; opacity: 0;
+  background: url(cursor.png) center/contain no-repeat; transition: width .2s, height .2s, margin .2s, opacity .25s; will-change: transform; }
+.cur.on { opacity: 1; } .cur.big { width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+@media (hover: hover) and (pointer: fine) { html.orb, html.orb * { cursor: none !important; } }
+#burst { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 80; }
+.toast { position: fixed; left: 50%; bottom: max(86px, calc(env(safe-area-inset-bottom, 0px) + 86px)); transform: translate(-50%, 20px); opacity: 0; z-index: 90; background: rgba(14,14,14,.92); border: 1px solid var(--line-2);
+  border-radius: 16px; padding: 14px 20px; font-size: 14px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transition: all .4s cubic-bezier(.2,.8,.2,1); pointer-events: none; max-width: calc(100vw - 32px); text-align: center; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.dock { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); z-index: 40; display: flex; gap: 6px; align-items: center; padding: 6px;
+  border: 1px solid var(--line-2); border-radius: 999px; background: rgba(10,10,10,.8); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+.sw-col { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; transition: transform .2s, border-color .2s; }
+.sw-col:hover { transform: scale(1.2); } .sw-col.on { border-color: #fff; }
+.dock .sep { width: 1px; height: 18px; background: var(--line-2); margin: 0 4px; }
+.lang { border: 0; background: var(--surface-2); border-radius: 999px; padding: 5px 12px; font-family: var(--mono); font-size: 12px; cursor: pointer; transition: background .2s; }
+.lang:hover { background: #222; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 100px; }
+.stat { text-align: center; padding: 26px 10px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+.stat b { display: block; font-size: clamp(36px, 5vw, 56px); letter-spacing: -.045em; line-height: 1; font-weight: 800; font-variant-numeric: tabular-nums; }
+.stat span { display: block; margin-top: 10px; color: var(--dim); font-size: 14px; }
+.marquee.rev { margin-top: 0; border-top: 0; } .marquee.rev .track { animation-direction: reverse; animation-duration: 46s; }
+.tl { position: relative; max-width: 780px; margin: 0 auto; padding-left: 34px; display: grid; gap: 14px; }
+.tl::before { content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 1px; background: linear-gradient(var(--accent), var(--line-2) 40%, transparent); }
+.ver { position: relative; border: 1px solid var(--line); background: var(--surface); border-radius: 18px; padding: 20px 22px; }
+.ver::before { content: ""; position: absolute; left: -33px; top: 26px; width: 15px; height: 15px; border-radius: 50%; background: var(--bg); border: 2px solid var(--accent); }
+.ver:first-child::before { background: var(--accent); box-shadow: 0 0 18px var(--accent); }
+.ver h3 { margin: 0 0 8px; font-size: 18px; display: flex; gap: 10px; align-items: center; }
+.ver h3 em { font-style: normal; font-family: var(--mono); font-size: 12px; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line-2); color: var(--soft); }
+.ver ul { margin: 0; padding-left: 18px; color: var(--dim); font-size: 15px; display: grid; gap: 4px; }
+@media (max-width: 700px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 70px; } .dock { padding: 4px; } .sw-col { width: 20px; height: 20px; } }
+@media (hover: none) { .cur { display: none; } }
+
+/* docs page */
+.dochead { padding: 56px 0 30px; } .back { color: var(--dim); font-size: 14px; display: inline-block; margin-bottom: 26px; transition: color .2s; } .back:hover { color: #fff; }
+.dtitle { font-size: clamp(40px, 7vw, 76px); letter-spacing: -.05em; margin: 10px 0 12px; line-height: 1; font-weight: 800; }
+.doclayout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; align-items: start; padding-bottom: 30px; }
+.toc { position: sticky; top: 84px; display: grid; gap: 2px; } .toc .eyebrow { margin-bottom: 8px; }
+.toc a { padding: 8px 12px; border-radius: 10px; color: var(--dim); font-size: 14px; transition: all .2s; } .toc a:hover { color: #fff; background: var(--surface-2); }
+.doc { min-width: 0; max-width: 760px; }
+.doc h2.dh { font-size: clamp(26px, 3.6vw, 36px); letter-spacing: -.035em; margin: 56px 0 14px; padding-top: 6px; font-weight: 800; scroll-margin-top: 84px; } .doc h2.dh:first-child { margin-top: 0; }
+.doc h3 { font-size: 19px; letter-spacing: -.02em; margin: 30px 0 8px; }
+.doc p { color: var(--soft); margin: 0 0 14px; font-size: 16px; }
+.doc ul { color: var(--soft); padding-left: 22px; display: grid; gap: 8px; margin: 0 0 16px; } .doc li::marker { color: var(--accent); }
+.dpre { border: 1px solid var(--line-2); border-radius: 14px; background: #050505; margin: 0 0 18px; }
+.dnote { border: 1px solid var(--line-2); border-left: 3px solid var(--warn); background: var(--surface); border-radius: 12px; padding: 14px 16px; color: var(--soft); font-size: 15px; margin: 0 0 18px; }
+.dtbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; margin: 0 0 18px; background: var(--surface); }
+.doc table { border-collapse: collapse; width: 100%; font-size: 14.5px; } .doc th { text-align: left; font-family: var(--mono); font-weight: 400; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.doc th, .doc td { padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; } .doc tr:last-child td { border-bottom: 0; } .doc td:first-child { white-space: nowrap; font-weight: 600; } .doc td { color: var(--soft); }
+@media (max-width: 860px) { .doclayout { grid-template-columns: minmax(0, 1fr); gap: 20px; } .toc { position: static; display: flex; flex-wrap: wrap; } .toc .eyebrow { width: 100%; } .doc td:first-child { white-space: normal; } }
+
+@media (max-width: 900px) {
+  .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); } .s2, .s3, .s4 { grid-column: span 2; } .bento .s2.half { grid-column: span 1; }
+  .steps, .codewrap { grid-template-columns: minmax(0, 1fr); }
+  .demo { grid-template-columns: 1fr; } .side { flex-direction: row; border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; padding: 8px; } .side .brand { display: none; }
+}
+@media (max-width: 600px) {
+  .navlinks a:not(.dl) { display: none; }
+  section { padding-top: 90px; } .hero { padding-top: 36px; } .marquee { margin-top: 80px; }
+  .bento { grid-template-columns: minmax(0, 1fr); } .s2, .s3, .s4, .bento .s2.half { grid-column: auto; }
+  .btn { width: 100%; } .chip { display: none; }
+  .tiles { grid-template-columns: 1fr; } .mod { grid-template-columns: 1fr auto; } .mod .bn { display: none; }
+  .bar { grid-template-columns: 84px 1fr 48px; }
+  .final { padding: 56px 18px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } .rv { transform: none; } .bar .t b { width: var(--w) !important; } }
+</style>
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+
+
+<div id="prog"></div>
+<div class="cur" id="cur"></div>
+<canvas id="burst" aria-hidden="true"></canvas>
+<div class="toast" id="toast" role="status"></div>
+<div class="dock" aria-label="Оформление">
+  <button class="sw-col on" data-rgb="255,255,255" style="background:#fff" aria-label="Белый"></button>
+  <button class="sw-col" data-rgb="103,232,249" style="background:#67e8f9" aria-label="Голубой"></button>
+  <button class="sw-col" data-rgb="196,181,253" style="background:#c4b5fd" aria-label="Фиолетовый"></button>
+  <button class="sw-col" data-rgb="190,242,100" style="background:#bef264" aria-label="Лайм"></button>
+  <button class="sw-col" data-rgb="253,164,175" style="background:#fda4af" aria-label="Розовый"></button>
+  <span class="sep"></span>
+  <button class="lang" id="lang" aria-label="Language">EN</button>
+</div>
+<canvas id="field" aria-hidden="true"></canvas>
+<div class="glow"></div>
+
+<div class="wrap">
+  <div class="navbar">
+    <nav>
+      <a class="brand" href="#top" id="top">
+        <span class="logo"><svg viewBox="90 130 820 740" aria-hidden="true"><use href="#flogo"/></svg></span>
+        Flortrap
+      </a>
+      <div class="navlinks">
+        <a href="#features">Возможности</a>
+        <a href="#docs">Документация</a>
+        <a href="https://github.com/slenderhold/Flortrap" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://discord.gg/nPeHUyxYBA" target="_blank" rel="noopener">Discord</a>
+        <a class="dl" href="https://github.com/slenderhold/Flortrap/releases/latest/download/Flortrap-Setup.exe" target="_blank" rel="noopener">Скачать</a>
+      </div>
+    </nav>
+  </div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><path id="flogo" d="M780 414 L746 412 L465 421 L426 430 L392 448 L343 486 L255 574 L180 655 L155 694 L130 749 L101 843 L101 854 L108 857 L285 858 L313 855 L319 849 L388 642 L397 627 L407 617 L423 608 L440 604 L610 595 L651 589 L689 555 L725 514 L781 419Z M898 146 L891 142 L360 152 L336 155 L309 164 L291 180 L255 237 L228 266 L166 567 L169 569 L177 563 L253 481 L324 411 L367 381 L407 362 L440 353 L475 348 L766 339 L794 334 L829 321 L876 268 L898 235 L900 227Z"/></defs></svg>
+
+  <main id="view-home">
+    <div class="hero">
+      <h1><span class="w">Flort</span><span class="w grad">rap</span></h1>
+      <p class="tag">Roblox, как вам удобно.</p>
+      <p class="lead">Быстрый запуск, тонкая настройка графики, моды и статус в Discord. Чёрный интерфейс, ничего лишнего.</p>
+      <div class="cta">
+        <a class="btn primary" id="dl" href="https://github.com/slenderhold/Flortrap/releases/latest/download/Flortrap-Setup.exe" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v9.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.4l3.3 3.3V4a1 1 0 0 1 1-1zM5 19h14a1 1 0 1 1 0 2H5a1 1 0 1 1 0-2z"/></svg>
+          Скачать
+        </a>
+        <a class="btn ghost" href="https://github.com/slenderhold/Flortrap" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.35.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="shot" id="shot">
+        <img src="app.png" width="918" height="614" alt="Главное окно Flortrap: статистика игры, кнопка запуска Roblox, проверка файлов, ремонт и папка данных">
+      </div>
+    </div>
+
+    <div class="diffs">
+      <div class="dcard rv"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></div><h3>Гибкая настройка</h3><p>Движок, графика, флаги и моды. Включайте только то, что нужно.</p></div>
+      <div class="dcard rv"><div class="ico"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div><h3>Оптимизация</h3><p>Разблокировка FPS, лимит в фоне, приоритет процесса и очистка кэша.</p></div>
+      <div class="dcard rv"><div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M3 9h18"/></svg></div><h3>Приятный интерфейс</h3><p>Чёрная тема, свой фон и GIF, плавные анимации.</p></div>
+      <div class="dcard rv"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div><h3>Не нагружает систему</h3><p>Лёгкий лаунчер: сворачивается в трей, без лишних служб и прав администратора.</p></div>
+    </div>
+
+    <div class="marquee" style="margin-top:100px" aria-hidden="true">
+      <div class="track">
+        <span>Разблокировка FPS</span><span>Моды</span><span>Сервер по региону</span><span>Свой фон и GIF</span><span>Статус Discord</span><span>Автообновление</span><span>Сворачивание в трей</span><span>Мультизапуск</span><span>Экспорт настроек</span><span>Очистка кэша</span>
+        <span>Разблокировка FPS</span><span>Моды</span><span>Сервер по региону</span><span>Свой фон и GIF</span><span>Статус Discord</span><span>Автообновление</span><span>Сворачивание в трей</span><span>Мультизапуск</span><span>Экспорт настроек</span><span>Очистка кэша</span>
+      </div>
+    </div>
+    <section id="features">
+      <div class="head rv"><div class="eyebrow">Возможности</div><h2>Всё для Roblox<br>в одном окне</h2>
+        <p class="sub">Запускайте игру, настраивайте движок и следите за временем в игре. Каждый переключатель выключен, пока вы сами его не включите.</p></div>
+
+      <div class="bento">
+        <div class="card s4 rv">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+          <h3>Настройки движка</h3>
+          <p>Лимит и разблокировка FPS, качество текстур, детали игры, MFAA и FXAA, выбор DirectX, Vulkan или OpenGL, резервирование оперативной памяти.</p>
+          <div class="viz bars" id="bars">
+            <div class="bar"><span>Лимит FPS</span><div class="t"><b style="--w:92%" data-w="92"></b></div><em>240</em></div>
+            <div class="bar"><span>Текстуры</span><div class="t"><b style="--w:75%" data-w="75"></b></div><em>Высокие</em></div>
+            <div class="bar"><span>Память</span><div class="t"><b style="--w:50%" data-w="50"></b></div><em>4 ГБ</em></div>
+          </div>
+        </div>
+        <div class="card s2 rv">
+          <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg></div>
+          <h3>Сервер по региону</h3>
+          <p>Выберите регион, и Flortrap найдёт публичный сервер игры в нём.</p>
+          <div class="viz chips" id="regions">
+            <button class="pick on">США</button><button class="pick">Германия</button><button class="pick">Нидерланды</button><button class="pick">Япония</button><button class="pick">Сингапур</button><button class="pick">Бразилия</button>
+          </div>
+        </div>
+        <div class="card s2 rv">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4a2 2 0 0 0-2 2v3.8h1.5a2.7 2.7 0 0 1 0 5.4H2V20a2 2 0 0 0 2 2h3.8v-1.5a2.7 2.7 0 0 1 5.4 0V22H17a2 2 0 0 0 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"/></svg></div>
+          <h3>Моды</h3>
+          <p>Каталог с баннерами. Скачали, и мод уже включён. Выключить можно одним переключателем.</p>
+          <div class="viz chips"><span class="pick on">Neon Cursor</span><span class="pick">Lite Graphics</span><span class="pick">Privacy Mode</span></div>
+        </div>
+        <div class="card s2 rv">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H4zM8 21h8M12 16v5"/><path d="m10 8 4 2.5-4 2.5z"/></svg></div>
+          <h3>Свой фон</h3>
+          <p>Картинка или GIF на фон окна, плавность до 120 кадров, прозрачность и матовое стекло.</p>
+          <div class="viz bg-demo"><span>GIF · 120 FPS</span></div>
+        </div>
+        <div class="card s2 rv">
+          <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M8 11h.01M16 11h.01M8 15c2.5 1.5 5.5 1.5 8 0"/></svg></div>
+          <h3>Статус в Discord</h3>
+          <p>Друзья видят, во что вы играете, и могут присоединиться.</p>
+          <div class="viz disc"><span class="av"><svg viewBox="90 130 820 740"><use href="#flogo"/></svg></span><div><b>Играет в Roblox</b><small>через Flortrap · 00:42</small></div></div>
+        </div>
+        <div class="card s3 rv">
+          <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <h3>Статистика</h3>
+          <p>Сколько вы играли сегодня и за неделю, число сессий и запущенные клиенты прямо на главной.</p>
+          <div class="viz"><div class="week" id="week"><i data-h="40"></i><i data-h="62"></i><i data-h="30"></i><i data-h="80"></i><i data-h="55" class="hi"></i><i data-h="96" class="hi"></i><i data-h="48"></i></div></div>
+        </div>
+        <div class="card s3 rv">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5"/></svg></div>
+          <h3>Автообновление</h3>
+          <p>Новый релиз скачивается сам: старая версия удаляется, новая остаётся. Проверка файлов игры, ремонт и очистка кэша тоже внутри.</p>
+          <div class="viz"><div class="upd"><b></b></div><div class="note">Обновление до последнего релиза</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo">
+      <div class="head center rv"><div class="eyebrow">Демо</div><h2>Потрогайте сами</h2>
+        <p class="sub">Это макет окна. Переключайте вкладки, двигайте ползунок, включайте моды.</p></div>
+
+      <div class="demo rv" id="demoWin">
+        <div class="side" role="tablist" aria-label="Разделы">
+          <div class="brand"><span class="logo"><svg viewBox="90 130 820 740"><use href="#flogo"/></svg></span>Flortrap</div>
+          <button class="nv on" role="tab" data-tab="home"><svg viewBox="0 0 24 24"><path d="M12 3 2 12h3v8h5v-6h4v6h5v-8h3z"/></svg>Home</button>
+          <button class="nv" role="tab" data-tab="set"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.5 7.5 0 0 0 0 2l-2 1.600 2 3.400 2.400-1a7 7 0 0 0 1.700 1l.4 2.500h4l.4-2.500a7 7 0 0 0 1.700-1l2.400 1 2-3.400zM13 15.500a3.500 3.500 0 1 1 0-7 3.500 3.500 0 0 1 0 7z"/></svg>Settings</button>
+          <button class="nv" role="tab" data-tab="mods"><svg viewBox="0 0 24 24"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4a2 2 0 0 0-2 2v3.8h1.5a2.7 2.7 0 0 1 0 5.4H2V20a2 2 0 0 0 2 2h3.8v-1.5a2.7 2.7 0 0 1 5.4 0V22H17a2 2 0 0 0 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"/></svg>Mods</button>
+        </div>
+
+        <div class="pane" id="p-home">
+          <h4>Welcome back</h4><p class="hint">Готовы играть? Запустите Roblox.</p>
+          <div class="tiles">
+            <div class="tile"><small>Сегодня</small><b>1h 12m</b></div>
+            <div class="tile"><small>7 дней</small><b>10h 24m</b></div>
+            <div class="tile"><small>Сессий</small><b>8</b></div>
+          </div>
+          <div class="launch"><b style="font-size:20px">Roblox</b><small style="color:var(--dim)">Flortrap · готово к запуску</small>
+            <button class="go" id="goBtn">▶ Launch Roblox</button></div>
+        </div>
+
+        <div class="pane" id="p-set" hidden>
+          <h4>Settings</h4><p class="hint">Всё выключено, пока вы не включите.</p>
+          <div class="row"><div style="flex:1;min-width:0"><div>Лимит FPS</div><input type="range" id="fps" min="30" max="360" step="10" value="144" aria-label="Лимит FPS"></div><span class="val" id="fpsVal">144 FPS</span></div>
+          <div class="row"><div>MFAA<small>Сглаживание краёв</small></div><button class="sw" role="switch" aria-checked="false" aria-label="MFAA"></button></div>
+          <div class="row"><div>Ограничение кадров в фоне<small>Экономит видеокарту</small></div><button class="sw" role="switch" aria-checked="true" aria-label="Ограничение кадров в фоне"></button></div>
+          <div class="row"><div>Статус в Discord<small>Показывать игру друзьям</small></div><button class="sw" role="switch" aria-checked="true" aria-label="Статус в Discord"></button></div>
+        </div>
+
+        <div class="pane" id="p-mods" hidden>
+          <h4>Mods</h4><p class="hint">Скачайте мод, и он включится сам.</p>
+          <div class="mod" data-id="neon"><div class="bn" style="background:linear-gradient(120deg,#031a1e,#0891b2)"></div><div><b>Neon Cursor</b><small>Голубая неоновая стрелка вместо белой.</small><div class="st">v1.0.0</div></div><button class="copy act">Скачать</button></div>
+          <div class="mod" data-id="lite"><div class="bn" style="background:linear-gradient(120deg,#111,#555)"></div><div><b>Lite Graphics</b><small>Без теней и с простыми мешами для слабых ПК.</small><div class="st">v1.0.0</div></div><button class="copy act">Скачать</button></div>
+          <div class="mod" data-id="priv"><div class="bn" style="background:linear-gradient(120deg,#160a24,#6d28d9)"></div><div><b>Privacy Mode</b><small>Отключает необязательную телеметрию.</small><div class="st">v1.0.0</div></div><button class="copy act">Скачать</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="start">
+      <div class="head center rv"><div class="eyebrow">Старт</div><h2>Три шага</h2></div>
+      <div class="steps">
+        <div class="step rv"><span class="n">1</span><h3>Скачайте</h3><p>Нажмите «Скачать» и откройте Flortrap-Setup.exe.</p></div>
+        <div class="step rv"><span class="n">2</span><h3>Установите</h3><p>Выберите папку, ярлыки и закрепление на панели задач. Права администратора не нужны.</p></div>
+        <div class="step rv"><span class="n">3</span><h3>Играйте</h3><p>Нажмите Launch Roblox. Остальное Flortrap сделает сам.</p></div>
+      </div>
+    </section>
+
+    <section id="mods">
+      <div class="teaser rv">
+        <div>
+          <div class="eyebrow">Для авторов</div>
+          <h2>Свой мод за пять минут</h2>
+          <p class="sub">Мод это папка с файлом mod.json: флаги и файлы для замены. Код в модах не запускается, поэтому они безопасны.</p>
+          <ul class="list"><li>Флаги и замена файлов, например курсора</li><li>Оригиналы сохраняются и возвращаются при выключении</li><li>Каталог на GitHub: добавьте свой мод через pull request</li></ul>
+        </div>
+        <a class="btn primary" href="#d-mods">Подробная документация <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h12.2l-4.6-4.6a1 1 0 1 1 1.4-1.4l6.3 6.3a1 1 0 0 1 0 1.4L14 20a1 1 0 0 1-1.4-1.4l4.6-4.6H5a1 1 0 1 1 0-2z"/></svg></a>
+      </div>
+    </section>
+
+    <section id="changelog">
+      <div class="head center rv"><div class="eyebrow">История</div><h2>Что нового</h2></div>
+      <div class="tl">
+        <div class="ver rv"><h3>Flortrap <em>1.7.0</em></h3><ul><li>Вкладка Mods: каталог, баннеры, переключатели и инструкция для авторов</li><li>Новый установщик с кольцом прогресса и белой галочкой</li></ul></div>
+        <div class="ver rv"><h3>Flortrap <em>1.6.0</em></h3><ul><li>Вход на сервер выбранного региона</li><li>Автообновление из релизов GitHub</li><li>Сворачивание в трей после запуска</li><li>Живая статистика на главной</li></ul></div>
+        <div class="ver rv"><h3>Flortrap <em>1.5</em></h3><ul><li>Настройки движка и статус Discord</li><li>Установщик с выбором папки и ярлыками</li></ul></div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="head center rv"><div class="eyebrow">Вопросы</div><h2>Коротко о главном</h2></div>
+      <div class="faq">
+        <details class="q rv"><summary>Нужны ли права администратора?</summary><p>Нет. Установщик ставит Flortrap в вашу папку. Данные и Roblox лежат отдельно, в C:\FRoblox.</p></details>
+        <details class="q rv"><summary>Это официальный лаунчер Roblox?</summary><p>Нет. Flortrap сделан независимо и не связан с Roblox Corporation. Используйте настройки на свой риск: Roblox может менять правила и игнорировать часть флагов.</p></details>
+        <details class="q rv"><summary>Безопасны ли моды?</summary><p>Моды состоят только из данных: флагов и ресурсов. Исполняемые файлы и скрипты Flortrap не распаковывает, а пути для замены ограничены папками контента Roblox.</p></details>
+        <details class="q rv" open><summary>Что делать, если столкнулся с проблемой?</summary><p>Если у вас есть проблема или вопрос, вы можете обратиться в наш <a href="https://discord.gg/nPeHUyxYBA" target="_blank" rel="noopener">Discord Server</a>.</p></details>
+      </div>
+    </section>
+
+  </main>
+<main id="view-docs" hidden>
+      <div class="dochead"><a class="back" href="#top">← На главную</a>
+        <div class="eyebrow">Документация</div>
+        <h1 class="dtitle">Документация</h1>
+        <p class="sub">Руководство по установке, настройкам, FastFlags и модам.</p></div>
+      <div class="doclayout"><aside class="toc"><div class="eyebrow">Разделы</div><a href="#d-install">Установка</a><a href="#d-first">Первый запуск</a><a href="#d-settings">Настройки</a><a href="#d-flags">FastFlags</a><a href="#d-mods">Моды</a><a href="#d-update">Обновления</a><a href="#d-help">Если что-то не так</a></aside>
+      <article class="doc"><h2 id="d-install" class="dh">Установка</h2><ul><li>Скачайте Flortrap-Setup.exe с главной страницы или из релизов на GitHub.</li><li>Запустите установщик. Права администратора не нужны.</li><li>Выберите папку, ярлыки (рабочий стол, меню «Пуск»), закрепление на панели задач и запуск после установки.</li><li>Когда круг дойдёт до 100% и появится белая галочка, установка закончена.</li></ul><p>Если запустить установщик ещё раз, он спросит, переустановить ли Flortrap. Удалить программу можно в «Параметры → Приложения». Данные и сам Roblox лежат отдельно, в папке C:\FRoblox, и при удалении программы остаются.</p><h2 id="d-first" class="dh">Первый запуск</h2><p>На вкладке Home нажмите Launch Roblox. Flortrap скачает или обновит Roblox, применит ваши настройки и запустит игру. Вкладка Roblox с историей игр появляется после первого запуска.</p><div class="dtbl"><table><thead><tr><th>Кнопка</th><th>Что делает</th></tr></thead><tbody><tr><td>Verify</td><td>Проверяет файлы игры.</td></tr><tr><td>Repair</td><td>Исправляет частые проблемы.</td></tr><tr><td>Folder</td><td>Открывает папку данных.</td></tr></tbody></table></div><h2 id="d-settings" class="dh">Настройки</h2><p>Настройки разделены на пять вкладок. Все опции выключены, пока вы сами их не включите. Изменения применяются при следующем запуске Roblox из Flortrap.</p><div class="dtbl"><table><thead><tr><th>Вкладка</th><th>Что внутри</th></tr></thead><tbody><tr><td>Graphics</td><td>Лимит и разблокировка FPS, качество, настройки движка: текстуры, детали игры, MFAA, FXAA, DirectX, Vulkan или OpenGL, память.</td></tr><tr><td>Speed</td><td>Приоритет процесса Roblox, очистка кэша, запуск вместе с Windows.</td></tr><tr><td>Customize</td><td>Свой курсор, шрифт, текстуры и фон окна, включая GIF.</td></tr><tr><td>Flags</td><td>Свои FastFlags.</td></tr><tr><td>General</td><td>Мультизапуск, поиск сервера по региону, сворачивание в трей, статус Discord, экспорт и импорт настроек.</td></tr></tbody></table></div><h2 id="d-flags" class="dh">FastFlags</h2><p>FastFlag это внутренний параметр Roblox. Flortrap записывает выбранные флаги в файл ClientAppSettings.json перед каждым запуском. Roblox принимает только флаги из своего белого списка и молча игнорирует остальные, поэтому часть флагов может ничего не менять.</p><ul><li>Откройте Settings → Flags и включите главный переключатель. По умолчанию он выключен.</li><li>Подтвердите предупреждение о неизвестных флагах.</li><li>Добавьте имя и значение флага. Значение может быть true, false, числом или текстом.</li><li>Удалённые и выключенные флаги убираются из файла при следующем запуске.</li></ul><pre class="dpre">{
+  &quot;DFIntTaskSchedulerTargetFps&quot;: 240,
+  &quot;FIntRenderShadowIntensity&quot;: 0
+}</pre><div class="dnote">Используйте только флаги, в которых уверены. Flortrap не может проверить, что принимает Roblox, и Roblox может изменить правила в любой момент.</div><h2 id="d-mods" class="dh">Моды</h2><p>Мод это папка с файлом mod.json. Он может задать флаги и заменить файлы Roblox, например курсор. Код в модах не запускается.</p><h3>Установка мода</h3><p>Откройте вкладку Mods и нажмите Download. Мод включится сам. Переключатель на карточке включает и выключает его, Remove удаляет мод и возвращает оригинальные файлы.</p><h3>Свой мод</h3><ul><li>Нажмите Open mods folder (C:\FRoblox\Mods) и создайте папку, например my-mod. Имя папки это id мода.</li><li>Положите в неё mod.json, по желанию banner.png и папку files.</li><li>Нажмите Refresh и включите мод.</li></ul><pre class="dpre">{
+  &quot;id&quot;: &quot;my-mod&quot;,
+  &quot;name&quot;: &quot;My Mod&quot;,
+  &quot;description&quot;: &quot;Turns shadows off.&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;author&quot;: &quot;You&quot;,
+  &quot;flags&quot;: { &quot;FIntRenderShadowIntensity&quot;: 0 },
+  &quot;files&quot;: [
+    { &quot;from&quot;: &quot;files/ArrowCursor.png&quot;,
+      &quot;to&quot;: &quot;content/textures/Cursors/KeyboardMouse/ArrowCursor.png&quot; }
+  ]
+}</pre><div class="dtbl"><table><thead><tr><th>Поле</th><th>Значение</th></tr></thead><tbody><tr><td>id</td><td>Строчные буквы, цифры, дефис и подчёркивание, от 2 до 41 символа. Должен совпадать с именем папки.</td></tr><tr><td>name, description</td><td>Название и описание на карточке.</td></tr><tr><td>version</td><td>Например 1.2.0. Более новая версия в каталоге показывает кнопку Update.</td></tr><tr><td>flags</td><td>Объект с FastFlags.</td></tr><tr><td>files</td><td>Список замен: from внутри мода, to внутри папки Roblox. Путь to должен начинаться с content/, PlatformContent/ или ExtraContent/.</td></tr></tbody></table></div><p>Разрешены картинки, звуки, шрифты и простые данные. Программы и скрипты не копируются. Лимит: 500 файлов и 100 МБ на мод. Оригинальные файлы сохраняются и возвращаются при выключении мода.</p><h3>Каталог на GitHub</h3><p>Вкладка Mods читает mods/catalog.json из репозитория slenderhold/Flortrap. Добавьте запись со ссылкой на zip и откройте pull request.</p><pre class="dpre">{ &quot;mods&quot;: [ {
+  &quot;id&quot;: &quot;my-mod&quot;, &quot;name&quot;: &quot;My Mod&quot;, &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;description&quot;: &quot;Turns shadows off.&quot;, &quot;author&quot;: &quot;You&quot;,
+  &quot;package&quot;: &quot;https://github.com/you/my-mod/releases/download/v1.0.0/my-mod.zip&quot;,
+  &quot;banner&quot;: &quot;https://raw.githubusercontent.com/you/my-mod/main/banner.png&quot;
+} ] }</pre><h2 id="d-update" class="dh">Обновления</h2><p>Flortrap проверяет последний релиз на GitHub. Если вышла новая версия, он скачивает Flortrap-Setup.exe, запускает тихую установку, закрывает старую программу и оставляет новую. Версия считается новой, если номер релиза выше номера установленной программы.</p><h2 id="d-help" class="dh">Если что-то не так</h2><div class="dtbl"><table><thead><tr><th>Проблема</th><th>Что сделать</th></tr></thead><tbody><tr><td>Roblox не запускается</td><td>Нажмите Verify, затем Repair на вкладке Home.</td></tr><tr><td>Флаг ничего не меняет</td><td>Roblox мог проигнорировать флаг: его нет в белом списке.</td></tr><tr><td>Мод не действует</td><td>Моды применяются при следующем запуске Roblox из Flortrap. Проверьте, что переключатель включён.</td></tr><tr><td>Не находится сервер региона</td><td>В выбранном регионе может не быть публичных серверов этой игры. Выберите другой.</td></tr><tr><td>Нужны подробности</td><td>Откройте вкладку Console. Журнал лежит в C:\FRoblox\Logs.</td></tr></tbody></table></div><p>Не нашли ответ? Задайте вопрос в нашем <a class="dl2" href="https://discord.gg/nPeHUyxYBA" target="_blank" rel="noopener">Discord Server</a>.</p></article></div>
+    </main>
+</div>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var hover = window.matchMedia && window.matchMedia('(hover: hover)').matches;
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+  var root = document.documentElement;
+
+  /* ---------- language ---------- */
+  var EN = {"Возможности": "Features", "Демо": "Demo", "Моды": "Mods", "Новое": "News", "Вопросы": "FAQ", "Скачать": "Download", "Roblox, как вам удобно.": "Roblox, your way.", "Быстрый запуск, тонкая настройка графики, моды и статус в Discord. Чёрный интерфейс, ничего лишнего.": "Fast launch, fine graphics tuning, mods and Discord status. A black interface, nothing extra.", "Статистика игры": "Playtime stats", "Запущено клиентов: 0": "Running clients: 0", "Моды, FastFlags, Discord": "Mods, FastFlags, Discord", "мода из коробки": "mods out of the box", "вкладок настроек": "settings tabs", "кадров в секунду у фона": "FPS for the background", "прав администратора": "admin rights needed", "Разблокировка FPS": "FPS unlock", "Сервер по региону": "Server by region", "Свой фон и GIF": "Custom background and GIF", "Статус Discord": "Discord status", "Автообновление": "Auto-update", "Сворачивание в трей": "Hide to tray", "Мультизапуск": "Multi-instance", "Экспорт настроек": "Settings export", "Очистка кэша": "Cache cleanup", "Профили настроек": "Settings profiles", "Тёмная тема": "Dark theme", "Резервная копия": "Backup", "Запуск вместе с Windows": "Start with Windows", "Проверка файлов": "File check", "Ремонт": "Repair", "Консоль": "Console", "Региональные серверы": "Regional servers", "Закрепление на панели задач": "Taskbar pin", "Установщик без прав администратора": "Installer without admin rights", "Всё для Roblox": "Everything for Roblox", "в одном окне": "in one window", "Запускайте игру, настраивайте движок и следите за временем в игре. Каждый переключатель выключен, пока вы сами его не включите.": "Launch the game, tune the engine and track your playtime. Every switch stays off until you turn it on.", "Настройки движка": "Engine settings", "Лимит и разблокировка FPS, качество текстур, детали игры, MFAA и FXAA, выбор DirectX, Vulkan или OpenGL, резервирование оперативной памяти.": "FPS limit and unlock, texture quality, game details, MFAA and FXAA, DirectX, Vulkan or OpenGL, reserved RAM.", "Лимит FPS": "FPS limit", "Текстуры": "Textures", "Высокие": "High", "Память": "Memory", "4 ГБ": "4 GB", "Выберите регион, и Flortrap найдёт публичный сервер игры в нём.": "Pick a region and Flortrap finds a public server of the game in it.", "США": "USA", "Германия": "Germany", "Нидерланды": "Netherlands", "Япония": "Japan", "Сингапур": "Singapore", "Бразилия": "Brazil", "Каталог с баннерами. Скачали, и мод уже включён. Выключить можно одним переключателем.": "A catalog with banners. Download a mod and it is already on. One switch turns it off.", "Свой фон": "Custom background", "Картинка или GIF на фон окна, плавность до 120 кадров, прозрачность и матовое стекло.": "An image or GIF as the window background, smoothing up to 120 FPS, transparency and frosted glass.", "Статус в Discord": "Discord status", "Друзья видят, во что вы играете, и могут присоединиться.": "Friends see what you play and can join you.", "Играет в Roblox": "Playing Roblox", "через Flortrap · 00:42": "via Flortrap · 00:42", "Статистика": "Stats", "Сколько вы играли сегодня и за неделю, число сессий и запущенные клиенты прямо на главной.": "Time played today and this week, session count and running clients right on the home screen.", "Пример, не ваши данные": "Example, not your data", "Новый релиз скачивается сам: старая версия удаляется, новая остаётся. Проверка файлов игры, ремонт и очистка кэша тоже внутри.": "A new release downloads itself: the old version is removed, the new one stays. File check, repair and cache cleanup are built in.", "Обновление до последнего релиза": "Updating to the latest release", "Потрогайте сами": "Try it yourself", "Это макет окна. Переключайте вкладки, двигайте ползунок, включайте моды.": "This is a mock window. Switch tabs, drag the slider, turn mods on.", "Готовы играть? Запустите Roblox.": "Ready to play? Launch Roblox.", "Сегодня": "Today", "7 дней": "7 days", "Сессий": "Sessions", "Flortrap · готово к запуску": "Flortrap · ready to launch", "Всё выключено, пока вы не включите.": "Everything is off until you turn it on.", "Сглаживание краёв": "Edge smoothing", "Ограничение кадров в фоне": "Background FPS limit", "Экономит видеокарту": "Saves your GPU", "Показывать игру друзьям": "Show your game to friends", "Скачайте мод, и он включится сам.": "Download a mod and it switches itself on.", "Голубая неоновая стрелка вместо белой.": "A cyan neon arrow instead of the white one.", "Без теней и с простыми мешами для слабых ПК.": "No shadows and simple meshes for weak PCs.", "Отключает необязательную телеметрию.": "Turns off optional telemetry.", "Старт": "Start", "Три шага": "Three steps", "Скачайте": "Download", "Нажмите «Скачать» и откройте Flortrap-Setup.exe.": "Press Download and open Flortrap-Setup.exe.", "Установите": "Install", "Выберите папку, ярлыки и закрепление на панели задач. Права администратора не нужны.": "Pick a folder, shortcuts and taskbar pin. No admin rights needed.", "Играйте": "Play", "Нажмите Launch Roblox. Остальное Flortrap сделает сам.": "Press Launch Roblox. Flortrap does the rest.", "Для авторов": "For authors", "Свой мод за пять минут": "Your own mod in five minutes", "Мод это папка с файлом mod.json: флаги и файлы для замены. Код в модах не запускается, поэтому они безопасны. Полная инструкция есть внизу вкладки Mods и в репозитории.": "A mod is a folder with a mod.json file: flags and files to replace. Mods never run code, so they are safe. The full guide is at the bottom of the Mods tab and in the repository.", "Флаги и замена файлов, например курсора": "Flags and file replacement, such as the cursor", "Оригиналы сохраняются и возвращаются при выключении": "Originals are saved and restored when you switch a mod off", "Каталог на GitHub: добавьте свой мод через pull request": "Catalog on GitHub: add your mod with a pull request", "Копировать": "Copy", "История": "History", "Что нового": "What's new", "Вкладка Mods: каталог, баннеры, переключатели и инструкция для авторов": "Mods tab: catalog, banners, switches and a guide for authors", "Новый установщик с кольцом прогресса и белой галочкой": "New installer with a progress ring and a white check mark", "Вход на сервер выбранного региона": "Join a server in the chosen region", "Автообновление из релизов GitHub": "Auto-update from GitHub releases", "Сворачивание в трей после запуска": "Hide to tray after launch", "Живая статистика на главной": "Live stats on the home screen", "Настройки движка и статус Discord": "Engine settings and Discord status", "Установщик с выбором папки и ярлыками": "Installer with folder choice and shortcuts", "Коротко о главном": "The short version", "Нужны ли права администратора?": "Do I need admin rights?", "Нет. Установщик ставит Flortrap в вашу папку. Данные и Roblox лежат отдельно, в C:\\FRoblox.": "No. The installer puts Flortrap in your own folder. Data and Roblox live separately, in C:\\FRoblox.", "Это официальный лаунчер Roblox?": "Is this the official Roblox launcher?", "Нет. Flortrap сделан независимо и не связан с Roblox Corporation. Используйте настройки на свой риск: Roblox может менять правила и игнорировать часть флагов.": "No. Flortrap is independent and not affiliated with Roblox Corporation. Use the settings at your own risk: Roblox can change rules and ignore some flags.", "Как обновляется программа?": "How does it update?", "Flortrap проверяет последний релиз на GitHub, скачивает его сам и заменяет старую версию.": "Flortrap checks the latest GitHub release, downloads it by itself and replaces the old version.", "Безопасны ли моды?": "Are mods safe?", "Моды состоят только из данных: флагов и ресурсов. Исполняемые файлы и скрипты Flortrap не распаковывает, а пути для замены ограничены папками контента Roblox.": "Mods are data only: flags and assets. Flortrap never unpacks executables or scripts, and replacement paths are limited to Roblox content folders.", "Как удалить Flortrap?": "How do I uninstall Flortrap?", "Через «Параметры → Приложения» или повторным запуском установщика.": "Through Settings → Apps, or by running the installer again.", "Попробуйте Flortrap": "Try Flortrap", "Установка занимает меньше минуты.": "Installing takes under a minute.", "Загрузка…": "Downloading…", "Выключить": "Turn off", "Включить": "Turn on", "v1.0.0 · включён": "v1.0.0 · on", "v1.0.0 · выключен": "v1.0.0 · off", "Запуск…": "Launching…", "Roblox запущен": "Roblox started", "Скопировано": "Copied", "Выделено": "Selected", "Загрузка началась. Откройте Flortrap-Setup.exe.": "Download started. Open Flortrap-Setup.exe.", "Главное окно Flortrap: статистика игры, кнопка запуска Roblox, проверка файлов, ремонт и папка данных": "Flortrap main window: playtime stats, Launch Roblox button, file check, repair and data folder"};
+  Object.assign(EN, {"Установка": "Installation", "Скачайте Flortrap-Setup.exe с главной страницы или из релизов на GitHub.": "Download Flortrap-Setup.exe from the home page or from the GitHub releases.", "Запустите установщик. Права администратора не нужны.": "Run the installer. Admin rights are not needed.", "Выберите папку, ярлыки (рабочий стол, меню «Пуск»), закрепление на панели задач и запуск после установки.": "Choose the folder, shortcuts (desktop, Start menu), taskbar pin and launch after install.", "Когда круг дойдёт до 100% и появится белая галочка, установка закончена.": "When the ring reaches 100% and the white check mark appears, the installation is done.", "Если запустить установщик ещё раз, он спросит, переустановить ли Flortrap. Удалить программу можно в «Параметры → Приложения». Данные и сам Roblox лежат отдельно, в папке C:\\FRoblox, и при удалении программы остаются.": "If you run the installer again it asks whether to reinstall Flortrap. You can uninstall in Settings → Apps. Data and Roblox itself live separately in C:\\FRoblox and stay after uninstalling.", "Первый запуск": "First launch", "На вкладке Home нажмите Launch Roblox. Flortrap скачает или обновит Roblox, применит ваши настройки и запустит игру. Вкладка Roblox с историей игр появляется после первого запуска.": "On the Home tab press Launch Roblox. Flortrap downloads or updates Roblox, applies your settings and starts the game. The Roblox tab with your game history appears after the first launch.", "Кнопка": "Button", "Что делает": "What it does", "Verify": "Verify", "Проверяет файлы игры.": "Checks the game files.", "Repair": "Repair", "Исправляет частые проблемы.": "Fixes common problems.", "Folder": "Folder", "Открывает папку данных.": "Opens the data folder.", "Настройки": "Settings", "Настройки разделены на пять вкладок. Все опции выключены, пока вы сами их не включите. Изменения применяются при следующем запуске Roblox из Flortrap.": "Settings are split into five tabs. Every option is off until you turn it on. Changes apply the next time Roblox starts from Flortrap.", "Вкладка": "Tab", "Что внутри": "What is inside", "Graphics": "Graphics", "Лимит и разблокировка FPS, качество, настройки движка: текстуры, детали игры, MFAA, FXAA, DirectX, Vulkan или OpenGL, память.": "FPS limit and unlock, quality, engine options: textures, game details, MFAA, FXAA, DirectX, Vulkan or OpenGL, memory.", "Speed": "Speed", "Приоритет процесса Roblox, очистка кэша, запуск вместе с Windows.": "Roblox process priority, cache cleanup, start with Windows.", "Customize": "Customize", "Свой курсор, шрифт, текстуры и фон окна, включая GIF.": "Custom cursor, font, textures and the window background, including GIF.", "Flags": "Flags", "Свои FastFlags.": "Your own FastFlags.", "General": "General", "Мультизапуск, поиск сервера по региону, сворачивание в трей, статус Discord, экспорт и импорт настроек.": "Multi-instance, region server search, hide to tray, Discord status, settings export and import.", "FastFlags": "FastFlags", "FastFlag это внутренний параметр Roblox. Flortrap записывает выбранные флаги в файл ClientAppSettings.json перед каждым запуском. Roblox принимает только флаги из своего белого списка и молча игнорирует остальные, поэтому часть флагов может ничего не менять.": "A FastFlag is an internal Roblox parameter. Flortrap writes the flags you choose into ClientAppSettings.json before every launch. Roblox only accepts flags from its own allow-list and silently ignores the rest, so some flags may change nothing.", "Откройте Settings → Flags и включите главный переключатель. По умолчанию он выключен.": "Open Settings → Flags and turn on the main switch. It is off by default.", "Подтвердите предупреждение о неизвестных флагах.": "Confirm the warning about unknown flags.", "Добавьте имя и значение флага. Значение может быть true, false, числом или текстом.": "Add the flag name and value. The value can be true, false, a number or text.", "Удалённые и выключенные флаги убираются из файла при следующем запуске.": "Removed and disabled flags are cleaned from the file on the next launch.", "Используйте только флаги, в которых уверены. Flortrap не может проверить, что принимает Roblox, и Roblox может изменить правила в любой момент.": "Only use flags you are sure about. Flortrap cannot check what Roblox accepts, and Roblox can change the rules at any time.", "Моды": "Mods", "Мод это папка с файлом mod.json. Он может задать флаги и заменить файлы Roblox, например курсор. Код в модах не запускается.": "A mod is a folder with a mod.json file. It can set flags and replace Roblox files, such as the cursor. Mods never run code.", "Установка мода": "Installing a mod", "Откройте вкладку Mods и нажмите Download. Мод включится сам. Переключатель на карточке включает и выключает его, Remove удаляет мод и возвращает оригинальные файлы.": "Open the Mods tab and press Download. The mod switches itself on. The switch on the card turns it on and off, Remove deletes the mod and restores the original files.", "Свой мод": "Your own mod", "Нажмите Open mods folder (C:\\FRoblox\\Mods) и создайте папку, например my-mod. Имя папки это id мода.": "Press Open mods folder (C:\\FRoblox\\Mods) and create a folder such as my-mod. The folder name is the mod id.", "Положите в неё mod.json, по желанию banner.png и папку files.": "Put mod.json in it, optionally banner.png and a files folder.", "Нажмите Refresh и включите мод.": "Press Refresh and switch the mod on.", "Поле": "Field", "Значение": "Meaning", "id": "id", "Строчные буквы, цифры, дефис и подчёркивание, от 2 до 41 символа. Должен совпадать с именем папки.": "Lower case letters, digits, hyphen and underscore, 2 to 41 characters. Must equal the folder name.", "name, description": "name, description", "Название и описание на карточке.": "Title and description on the card.", "version": "version", "Например 1.2.0. Более новая версия в каталоге показывает кнопку Update.": "For example 1.2.0. A newer version in the catalog shows an Update button.", "flags": "flags", "Объект с FastFlags.": "An object of FastFlags.", "files": "files", "Список замен: from внутри мода, to внутри папки Roblox. Путь to должен начинаться с content/, PlatformContent/ или ExtraContent/.": "A list of replacements: from inside the mod, to inside the Roblox folder. The to path must start with content/, PlatformContent/ or ExtraContent/.", "Разрешены картинки, звуки, шрифты и простые данные. Программы и скрипты не копируются. Лимит: 500 файлов и 100 МБ на мод. Оригинальные файлы сохраняются и возвращаются при выключении мода.": "Images, sounds, fonts and plain data are allowed. Programs and scripts are never copied. Limit: 500 files and 100 MB per mod. Original files are saved and put back when the mod is switched off.", "Каталог на GitHub": "Catalog on GitHub", "Вкладка Mods читает mods/catalog.json из репозитория slenderhold/Flortrap. Добавьте запись со ссылкой на zip и откройте pull request.": "The Mods tab reads mods/catalog.json from the slenderhold/Flortrap repository. Add an entry with a link to your zip and open a pull request.", "Обновления": "Updates", "Flortrap проверяет последний релиз на GitHub. Если вышла новая версия, он скачивает Flortrap-Setup.exe, запускает тихую установку, закрывает старую программу и оставляет новую. Версия считается новой, если номер релиза выше номера установленной программы.": "Flortrap checks the latest GitHub release. If a new version is out, it downloads Flortrap-Setup.exe, runs a silent install, closes the old program and leaves the new one. A version counts as new when the release number is higher than the installed one.", "Если что-то не так": "Troubleshooting", "Проблема": "Problem", "Что сделать": "What to do", "Roblox не запускается": "Roblox does not start", "Нажмите Verify, затем Repair на вкладке Home.": "Press Verify, then Repair on the Home tab.", "Флаг ничего не меняет": "A flag changes nothing", "Roblox мог проигнорировать флаг: его нет в белом списке.": "Roblox may have ignored it because it is not on the allow-list.", "Мод не действует": "A mod has no effect", "Моды применяются при следующем запуске Roblox из Flortrap. Проверьте, что переключатель включён.": "Mods apply the next time Roblox starts from Flortrap. Check that the switch is on.", "Не находится сервер региона": "No server found in a region", "В выбранном регионе может не быть публичных серверов этой игры. Выберите другой.": "There may be no public servers of that game in the region. Pick another.", "Нужны подробности": "You need details", "Откройте вкладку Console. Журнал лежит в C:\\FRoblox\\Logs.": "Open the Console tab. The log is in C:\\FRoblox\\Logs.", "На главную": "Back to home", "Документация": "Documentation", "Руководство по установке, настройкам, FastFlags и модам.": "A guide to installation, settings, FastFlags and mods.", "Разделы": "Sections"});
+  Object.assign(EN, {'Подробная документация':'Full documentation'});
+  Object.assign(EN, {"Гибкая настройка": "Flexible settings", "Движок, графика, флаги и моды. Включайте только то, что нужно.": "Engine, graphics, flags and mods. Turn on only what you need.", "Оптимизация": "Optimization", "Разблокировка FPS, лимит в фоне, приоритет процесса и очистка кэша.": "FPS unlock, background limit, process priority and cache cleanup.", "Приятный интерфейс": "A pleasant interface", "Чёрная тема, свой фон и GIF, плавные анимации.": "A black theme, custom background and GIF, smooth animations.", "Не нагружает систему": "Light on your system", "Лёгкий лаунчер: сворачивается в трей, без лишних служб и прав администратора.": "A light launcher: hides to tray, no extra services or admin rights.", "Что делать, если столкнулся с проблемой?": "What if I run into a problem?", "Если у вас есть проблема или вопрос, вы можете обратиться в наш": "If you have a problem or a question, you can reach out in our", "Не нашли ответ? Задайте вопрос в нашем": "Can't find the answer? Ask in our"});
+  var lang = 'ru';
+  var orig = new WeakMap();
+  function T(s) { return lang === 'en' && EN[s] ? EN[s] : s; }
+  function walk(toEn) {
+    var tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) { var p = n.parentNode && n.parentNode.nodeName; return (p === 'SCRIPT' || p === 'STYLE' || p === 'PRE') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }
+    });
+    var n;
+    while ((n = tw.nextNode())) {
+      var raw = n.nodeValue, t = raw.trim();
+      if (toEn) {
+        if (EN[t]) { if (!orig.has(n)) orig.set(n, raw); n.nodeValue = raw.replace(t, EN[t]); }
+      } else if (orig.has(n)) { n.nodeValue = orig.get(n); orig.delete(n); }
+    }
+    var img = $('#shot img');
+    if (!img.__ru) img.__ru = img.alt;
+    img.alt = toEn && EN[img.__ru] ? EN[img.__ru] : img.__ru;
+    root.lang = toEn ? 'en' : 'ru';
+  }
+  $('#lang').addEventListener('click', function () {
+    lang = lang === 'ru' ? 'en' : 'ru'; walk(lang === 'en'); this.textContent = lang === 'en' ? 'RU' : 'EN';
+    try { localStorage.setItem('ft-lang', lang); } catch (e) {}
+    refreshDemo();
+  });
+
+  /* ---------- accent ---------- */
+  var accent = [255, 255, 255];
+  function setAccent(rgb) {
+    accent = rgb.split(',').map(Number);
+    root.style.setProperty('--accent', 'rgb(' + rgb + ')'); root.style.setProperty('--accent-rgb', rgb);
+    drawField();
+  }
+  $$('.sw-col').forEach(function (b) {
+    b.addEventListener('click', function () {
+      $$('.sw-col').forEach(function (o) { o.classList.toggle('on', o === b); });
+      setAccent(b.getAttribute('data-rgb'));
+      try { localStorage.setItem('ft-accent', b.getAttribute('data-rgb')); } catch (e) {}
+    });
+  });
+
+  /* ---------- dot field ---------- */
+  var cv = $('#field'), cx = cv.getContext('2d'), W = 0, H = 0, mx = -999, my = -999, dots = [];
+  function size() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2); W = window.innerWidth; H = window.innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    dots = []; var g = 34;
+    for (var y = g / 2; y < H; y += g) for (var x = g / 2; x < W; x += g) dots.push([x, y]);
+  }
+  function drawField() {
+    cx.clearRect(0, 0, W, H);
+    var c = accent.join(',');
+    for (var i = 0; i < dots.length; i++) {
+      var d = dots[i], dx = d[0] - mx, dy = d[1] - my, dist = Math.sqrt(dx * dx + dy * dy), t = Math.max(0, 1 - dist / 220);
+      var ox = t * t * (dx / (dist || 1)) * 8, oy = t * t * (dy / (dist || 1)) * 8;
+      cx.fillStyle = 'rgba(' + c + ',' + (0.07 + t * 0.55).toFixed(3) + ')';
+      cx.beginPath(); cx.arc(d[0] + ox, d[1] + oy, 0.9 + t * 1.6, 0, 6.2832); cx.fill();
+    }
+  }
+  size(); drawField();
+  window.addEventListener('resize', function () { size(); drawField(); });
+
+  /* ---------- pointer: dots, ring cursor ---------- */
+  var cur = $('#cur'), raf = 0, px = 0, py = 0, rx = 0, ry = 0;
+  if (!reduce && hover) root.classList.add('orb');
+  if (!reduce && hover) {
+    window.addEventListener('mousemove', function (e) {
+      mx = px = e.clientX; my = py = e.clientY; cur.classList.add('on');
+      if (!raf) raf = requestAnimationFrame(function () { raf = 0; drawField(); });
+      cur.classList.toggle('big', !!(e.target.closest && e.target.closest('a,button,summary,.pick,input')));
+    });
+    document.addEventListener('mouseleave', function () { mx = my = -999; drawField(); cur.classList.remove('on'); });
+    (function follow() { rx += (px - rx) * 0.45; ry += (py - ry) * 0.45; cur.style.transform = 'translate(' + rx.toFixed(1) + 'px,' + ry.toFixed(1) + 'px)'; requestAnimationFrame(follow); })();
+  }
+
+  /* ---------- scroll progress ---------- */
+  var prog = $('#prog');
+  function onScroll() { var h = document.documentElement.scrollHeight - window.innerHeight; prog.style.transform = 'scaleX(' + (h > 0 ? clamp(window.scrollY / h, 0, 1) : 0) + ')'; }
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  /* ---------- screenshot: flattens while scrolling, turns toward the cursor ---------- */
+  var stage = $('#stage'), shot = $('#shot'), hx = 0, hy = 0, over = false, cRX = 16, cRY = 0, cS = .92;
+  if (!reduce) {
+    stage.addEventListener('mousemove', function (e) {
+      var r = stage.getBoundingClientRect(); var x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      hx = (x - .5) * 2; hy = (y - .5) * 2; over = true; shot.classList.add('live');
+      shot.style.setProperty('--gx', (x * 100) + '%'); shot.style.setProperty('--gy', (y * 100) + '%');
+    });
+    stage.addEventListener('mouseleave', function () { over = false; hx = hy = 0; shot.classList.remove('live'); });
+    (function tilt() {
+      var r = stage.getBoundingClientRect(), vh = window.innerHeight;
+      var p = clamp((r.top - vh * 0.08) / (vh * 0.5), 0, 1);
+      var tRX = p * 16 - hy * 5.4, tRY = hx * 9, tS = .92 + .08 * (1 - p) + (over ? .012 : 0);
+      cRX += (tRX - cRX) * .12; cRY += (tRY - cRY) * .12; cS += (tS - cS) * .12;
+      shot.style.transform = 'rotateX(' + cRX.toFixed(2) + 'deg) rotateY(' + cRY.toFixed(2) + 'deg) scale(' + cS.toFixed(3) + ')';
+      requestAnimationFrame(tilt);
+    })();
+    $$('.card').forEach(function (c) {
+      c.addEventListener('mousemove', function (e) { var r = c.getBoundingClientRect(); c.style.setProperty('--mx', (e.clientX - r.left) + 'px'); c.style.setProperty('--my', (e.clientY - r.top) + 'px'); });
+    });
+    $$('.btn').forEach(function (b) {
+      b.addEventListener('mousemove', function (e) { var r = b.getBoundingClientRect(); b.style.translate = ((e.clientX - r.left - r.width / 2) * .12).toFixed(1) + 'px ' + ((e.clientY - r.top - r.height / 2) * .2).toFixed(1) + 'px'; });
+      b.addEventListener('mouseleave', function () { b.style.translate = ''; });
+    });
+  } else { shot.style.transform = 'none'; }
+
+  /* ---------- reveal, bars, counters ---------- */
+  function fillBars(el) {
+    $$('.bar b', el).forEach(function (b) { b.style.width = b.getAttribute('data-w') + '%'; });
+    $$('.week i', el).forEach(function (b, i) { setTimeout(function () { b.style.height = b.getAttribute('data-h') + '%'; }, i * 70); });
+  }
+  function count(el) {
+    var to = +el.getAttribute('data-count'), t0 = performance.now(), dur = 1300;
+    (function step(now) { var k = clamp((now - t0) / dur, 0, 1), e = 1 - Math.pow(1 - k, 3); el.textContent = Math.round(to * e); if (k < 1) requestAnimationFrame(step); })(t0);
+  }
+  function show(el) { el.classList.add('in'); if (el.querySelector('.bar,.week')) fillBars(el); var c = $('[data-count]', el); if (c) count(c); }
+  if ('IntersectionObserver' in window && !reduce) {
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { show(e.target); io.unobserve(e.target); } }); }, { threshold: 0.12 });
+    $$('.rv').forEach(function (el) { io.observe(el); });
+  } else { $$('.rv').forEach(show); $$('[data-count]').forEach(function (c) { c.textContent = c.getAttribute('data-count'); }); }
+
+  /* ---------- regions ---------- */
+  $$('#regions .pick').forEach(function (p) { p.addEventListener('click', function () { $$('#regions .pick').forEach(function (o) { o.classList.remove('on'); }); p.classList.add('on'); }); });
+
+  /* ---------- demo window ---------- */
+  $$('.nv').forEach(function (b) {
+    b.addEventListener('click', function () {
+      $$('.nv').forEach(function (o) { o.classList.toggle('on', o === b); });
+      ['home', 'set', 'mods'].forEach(function (t) { $('#p-' + t).hidden = (t !== b.getAttribute('data-tab')); });
+    });
+  });
+  $$('.sw').forEach(function (s) { s.addEventListener('click', function () { s.setAttribute('aria-checked', s.getAttribute('aria-checked') === 'true' ? 'false' : 'true'); }); });
+  $('#fps').addEventListener('input', function (e) { $('#fpsVal').textContent = e.target.value + ' FPS'; });
+  var go = $('#goBtn'), goState = 0;
+  function paintGo() { go.textContent = goState === 0 ? '▶ Launch Roblox' : goState === 1 ? T('Запуск…') : T('Roblox запущен'); go.classList.toggle('busy', goState !== 0); }
+  go.addEventListener('click', function () {
+    if (goState) return; goState = 1; paintGo();
+    setTimeout(function () { goState = 2; paintGo(); }, 1100);
+    setTimeout(function () { goState = 0; paintGo(); }, 3200);
+  });
+  var mods = $$('.mod').map(function (m) { return { st: 0, btn: $('.act', m), txt: $('.st', m) }; });
+  function paintMod(o) {
+    if (o.st === 0) { o.btn.textContent = T('Скачать'); o.txt.textContent = 'v1.0.0'; o.txt.style.color = ''; }
+    else if (o.st === 1) { o.btn.textContent = T('Загрузка…'); }
+    else if (o.st === 2) { o.btn.textContent = T('Выключить'); o.txt.textContent = T('v1.0.0 · включён'); o.txt.style.color = 'var(--good)'; }
+    else { o.btn.textContent = T('Включить'); o.txt.textContent = T('v1.0.0 · выключен'); o.txt.style.color = ''; }
+  }
+  mods.forEach(function (o) {
+    o.btn.addEventListener('click', function () {
+      if (o.st === 0) { o.st = 1; o.btn.disabled = true; paintMod(o); setTimeout(function () { o.st = 2; o.btn.disabled = false; paintMod(o); }, 900); }
+      else if (o.st === 2) { o.st = 3; paintMod(o); } else if (o.st === 3) { o.st = 2; paintMod(o); }
+    });
+  });
+  function refreshDemo() { paintGo(); mods.forEach(paintMod); }
+
+  /* ---------- download: particle burst and a toast ---------- */
+  var bc = $('#burst'), bx = bc.getContext('2d'), parts = [], running = false;
+  function bsize() { bc.width = window.innerWidth; bc.height = window.innerHeight; }
+  bsize(); window.addEventListener('resize', bsize);
+  function loop() {
+    bx.clearRect(0, 0, bc.width, bc.height);
+    parts = parts.filter(function (p) { return p.l > 0; });
+    parts.forEach(function (p) { p.x += p.vx; p.y += p.vy; p.vy += .12; p.vx *= .985; p.l -= 1; bx.fillStyle = 'rgba(' + p.c + ',' + clamp(p.l / 60, 0, 1).toFixed(2) + ')'; bx.fillRect(p.x, p.y, p.s, p.s); });
+    if (parts.length) requestAnimationFrame(loop); else running = false;
+  }
+  var toast = $('#toast'), tt = 0;
+  $$('a[href*="Flortrap-Setup"]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      toast.textContent = T('Загрузка началась. Откройте Flortrap-Setup.exe.'); toast.classList.add('show');
+      clearTimeout(tt); tt = setTimeout(function () { toast.classList.remove('show'); }, 4200);
+      if (reduce) return;
+      var c = accent.join(',');
+      for (var i = 0; i < 70; i++) { var an = Math.random() * 6.283, sp = 2 + Math.random() * 6; parts.push({ x: e.clientX, y: e.clientY, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp - 3, s: 2 + Math.random() * 3, l: 50 + Math.random() * 40, c: Math.random() < .3 ? '255,255,255' : c }); }
+      if (!running) { running = true; requestAnimationFrame(loop); }
+    });
+  });
+
+
+  /* ---------- views: home and documentation ---------- */
+  var vHome = $('#view-home'), vDocs = $('#view-docs');
+  function route(first) {
+    var h = location.hash, docs = h === '#docs' || h.indexOf('#d-') === 0;
+    vHome.hidden = docs; vDocs.hidden = !docs;
+    $$('.navlinks a[href="#docs"]').forEach(function (a) { a.style.color = docs ? '#fff' : ''; });
+    var target = null;
+    try { target = docs ? (h === '#docs' ? null : $(h)) : (h && h !== '#top' ? $(h) : null); } catch (e) {}
+    if (target) target.scrollIntoView({ behavior: reduce || first ? 'auto' : 'smooth', block: 'start' });
+    else if (docs || !first) window.scrollTo(0, 0);
+    if (lang === 'en') walk(true);
+  }
+  window.addEventListener('hashchange', function () { route(false); });
+  route(true);
+
+  /* ---------- restore saved choices ---------- */
+  try {
+    var sa = localStorage.getItem('ft-accent');
+    if (sa) { var b = $$('.sw-col').filter(function (x) { return x.getAttribute('data-rgb') === sa; })[0]; if (b) b.click(); }
+    if (localStorage.getItem('ft-lang') === 'en') $('#lang').click();
+  } catch (e) {}
+})();
+</script>
+
+</body>
+</html>
