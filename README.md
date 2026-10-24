@@ -4,7 +4,7 @@
 
 <br>
 
-<a href="https://github.com/slenderhold/Flortrap/raw/main/download/Flortrap-Setup.exe"><img src="https://img.shields.io/badge/%E2%AC%87%20Download-Flortrap--Setup.exe-ffffff?style=for-the-badge&labelColor=000000" alt="Download"></a>
+<a href="https://github.com/slenderhold/Flortrap/releases/download/1.7.1/Flortrap-Setup.exe"><img src="https://img.shields.io/badge/%E2%AC%87%20Download-Flortrap--Setup.exe-ffffff?style=for-the-badge&labelColor=000000" alt="Download"></a>
 <a href="https://slenderhold.github.io/Flortrap/"><img src="https://img.shields.io/badge/%F0%9F%8C%90%20Website-open-161b22?style=for-the-badge&labelColor=000000" alt="Website"></a>
 <a href="https://discord.gg/nPeHUyxYBA"><img src="https://img.shields.io/badge/Discord-Join%20server-5865F2?style=for-the-badge&logo=discord&logoColor=white&labelColor=000000" alt="Discord"></a>
 
@@ -82,7 +82,7 @@
 
 | | Step |
 |:-:|:--|
-| **1** | Download **[Flortrap-Setup.exe](https://github.com/slenderhold/Flortrap/raw/main/download/Flortrap-Setup.exe)** from the [Releases](https://github.com/slenderhold/Flortrap/releases) page. |
+| **1** | Download **[Flortrap-Setup.exe](https://github.com/slenderhold/Flortrap/releases/download/1.7.1/Flortrap-Setup.exe)** from the [Releases](https://github.com/slenderhold/Flortrap/releases) page. |
 | **2** | Run it. Pick a folder and shortcuts. **No administrator rights needed.** |
 | **3** | When the ring fills and the white check mark appears, open Flortrap and press **Launch Roblox**. |
 
